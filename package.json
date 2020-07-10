@@ -1,0 +1,20 @@
+{
+  "name": "timestream-browser",
+  "version": "0.0.1",
+  "main": "index.js",
+  "type": "module",
+  "author": "Jesse Kriss <jesse@jklabs.net>",
+  "license": "MIT",
+  "bin": {
+    "ts-browser": "index.js"
+  },
+  "dependencies": {
+    "blessed": "^0.1.81",
+    "chalk": "^4.1.0",
+    "front-matter": "^4.0.2",
+    "marked": "^1.1.0",
+    "marked-terminal": "^4.1.0",
+    "node-fetch": "^2.6.0",
+    "tmp-promise": "^3.0.2"
+  }
+}
