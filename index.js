@@ -19,8 +19,9 @@ const streamPipeline = promisify(pipeline);
 marked.setOptions({
   // Define custom renderer
   renderer: new TerminalRenderer({
-    firstHeading: chalk.bold,
-    link: chalk.bold,
+    firstHeading: chalk.white.bold,
+    link: chalk.white,
+    href: chalk.underline,
     hr: () => "---",
   }),
 });
@@ -41,12 +42,14 @@ class Display {
       left: "center",
       width: "100%",
       height: "100%",
-      content: "Hello {bold}world{/bold}!",
+      content: '',
       scrollable: true,
       mouse: true,
       keys: true,
       vi: true,
       tags: true,
+      bg: "#222",
+      fg: '#bbb',
       padding: {
         top: 1,
         left: 2,
@@ -54,7 +57,6 @@ class Display {
         style: {
           bottom: 1,
         },
-        bg: "#222",
       },
     });
 
@@ -106,55 +108,67 @@ class Display {
   }
   async get(url) {
     let content = `Welcome!`;
-    if (url) this.showText(`loading ${url}...`);
-    const res = await fetch(url);
-    if (res && res.ok) {
-      content = "";
-      const type = res.headers.get("content-type");
-      if (type && type.startsWith("text")) {
-        const text = await res.text();
-        if (res.headers.get("Post-Time")) {
-          content += `{bold}${res.headers.get("Post-Time")}{/bold}\n\n`;
+    if (url) {
+      let loadingMessage
+      let color = '#222'
+      let i = 0
+      loadingMessage = setInterval(() => {
+        i++
+        // if (loadingMessage) clearTimeout(loadingMessage)
+        this.showText(`{${color}-fg}loading ${url}...{/}`);
+        color = i % 2 === 0 ? '#666' : '#777' 
+
+      }, 500)
+      const res = await fetch(url);
+      clearInterval(loadingMessage)
+      if (res && res.ok) {
+        content = "";
+        const type = res.headers.get("content-type");
+        if (type && type.startsWith("text")) {
+          const text = await res.text();
+          if (res.headers.get("Post-Time")) {
+            content += `{bold}${res.headers.get("Post-Time")}{/bold}\n\n`;
+          }
+
+          if (type.startsWith("text/plain")) {
+            content += text;
+          } else if (type.startsWith("text/markdown")) {
+            content += marked(fm(text).body);
+          }
+        } else if (type.startsWith("image")) {
+          // shell out to termpix for this?
+
+          // let imageFile = await this.asFile(res, ".jpeg");
+          // let imageFile = './tmpfile.png'
+          // console.log("image at", imageFile)
+          // const img = blessed.image({
+          //   parent: this.box,
+          //   top: 4,
+          //   left: 0,
+          //   // ascii: true,
+          //   // type: 'overlay',
+          //   width: "shrink",
+          //   height: "shrink",
+          //   file: imageFile,
+          //   search: false,
+          // });
+          // content = `this is an image? ${imageFile}`;
+          content += `Sorry, can't handle images just yet`;
+        } else {
+          content = `Don't know how to display ${type}`;
         }
 
-        if (type.startsWith("text/plain")) {
-          content += text;
-        } else if (type.startsWith("text/markdown")) {
-          content += marked(fm(text).body);
+        if (res.headers.get("Link")) {
+          const links = parseLinkHeader(res.headers.get("Link"));
+          const previous = links && links.find((link) => link.rel === "previous");
+          if (previous) {
+            content += `\n\n{#777-fg}press the right arrow to continue{/} {bold}->{/}\n`;
+            this.previousPost = new URL(previous.url, url).href;
+          }
         }
-      } else if (type.startsWith("image")) {
-        // shell out to termpix for this?
-
-        // let imageFile = await this.asFile(res, ".jpeg");
-        // let imageFile = './tmpfile.png'
-        // console.log("image at", imageFile)
-        // const img = blessed.image({
-        //   parent: this.box,
-        //   top: 4,
-        //   left: 0,
-        //   // ascii: true,
-        //   // type: 'overlay',
-        //   width: "shrink",
-        //   height: "shrink",
-        //   file: imageFile,
-        //   search: false,
-        // });
-        // content = `this is an image? ${imageFile}`;
-        content += `Sorry, can't handle images just yet`;
-      } else {
-        content = `Don't know how to display ${type}`;
+      } else if (url) {
+        content = `Error loading ${url}`;
       }
-
-      if (res.headers.get("Link")) {
-        const links = parseLinkHeader(res.headers.get("Link"));
-        const previous = links && links.find((link) => link.rel === "previous");
-        if (previous) {
-          content += `\n\n--\npress the right arrow to continue ->\n`;
-          this.previousPost = new URL(previous.url, url).href;
-        }
-      }
-    } else if (url) {
-      content = `Error loading ${url}`;
     }
     this.showText(content);
   }
