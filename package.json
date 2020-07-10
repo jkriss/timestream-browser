@@ -16,5 +16,8 @@
     "marked-terminal": "^4.1.0",
     "node-fetch": "^2.6.0",
     "tmp-promise": "^3.0.2"
+  },
+  "devDependencies": {
+    "parcel": "^1.12.4"
   }
 }

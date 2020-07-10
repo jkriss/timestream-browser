@@ -1,5 +1,3 @@
-#! /usr/bin/env node
-
 import blessed from "blessed";
 import fetch from "node-fetch";
 import { URL } from "url";
@@ -30,6 +28,7 @@ class Display {
   constructor() {
     this.history = [];
     this.historyPosition = 0;
+    this.cache = {}
     const screen = blessed.screen({
       smartCSR: true,
     });
